@@ -1,0 +1,43 @@
+{
+  "guest_count": 229,
+  "explicit_plus_one_count": 16,
+  "recommended_guest_table_range": {
+    "min": 24,
+    "max": 25
+  },
+  "sweetheart_table": true,
+  "preferred_if_group_integrity_matters": {
+    "guest_tables": 25,
+    "allocations": [
+      {
+        "group": "Royce",
+        "tables": 6,
+        "estimated_guests_per_table": "9"
+      },
+      {
+        "group": "Cregg",
+        "tables": 4,
+        "estimated_guests_per_table": "9-10"
+      },
+      {
+        "group": "Horst + Lyster",
+        "tables": 4,
+        "estimated_guests_per_table": "9-10"
+      },
+      {
+        "group": "Family Friends",
+        "tables": 7,
+        "estimated_guests_per_table": "9-10"
+      },
+      {
+        "group": "Friends",
+        "tables": 4,
+        "estimated_guests_per_table": "8-9"
+      }
+    ]
+  },
+  "preferred_if_dance_floor_priority_is_higher": {
+    "guest_tables": 24,
+    "note": "Expect more cross-group mixing and less buffer for late RSVP changes."
+  }
+}

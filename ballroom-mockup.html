@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jenna & Tyler Seating App</title>
+  <style>
+    :root {
+      --bg: #f3ebde;
+      --panel: #fbf6ee;
+      --paper: #fffaf2;
+      --ink: #3f3126;
+      --muted: #7c6b5d;
+      --line: rgba(78, 57, 37, 0.12);
+      --wall: #d2c1ab;
+      --floor-a: #e8d1a8;
+      --floor-b: #ddb98e;
+      --dance-a: #b77d52;
+      --dance-b: #9b643f;
+      --sweetheart-a: #f3d4c0;
+      --sweetheart-b: #dfab84;
+      --table-a: #fffefb;
+      --table-b: #ead8c2;
+      --table-ring: #bb9a72;
+      --seat: #f4eadb;
+      --seat-border: rgba(73, 55, 36, 0.18);
+      --shadow: 0 20px 50px rgba(75, 55, 36, 0.12);
+      --cregg: #b75d4e;
+      --royce: #56779a;
+      --lyster: #918146;
+      --horst: #7c6b9f;
+      --family-friends: #6f9272;
+      --friends: #d07c45;
+      --empty-drop: rgba(255, 255, 255, 0.45);
+      --success: #547459;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.82), transparent 28%),
+        linear-gradient(180deg, #f8f1e7 0%, #eee2d2 100%);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 28px 18px 36px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3.6vw, 4rem);
+      line-height: 0.95;
+      font-weight: 600;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .stat {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(79, 60, 40, 0.08);
+      border-radius: 999px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .shell {
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .board,
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid rgba(86, 63, 39, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .board {
+      border-radius: 28px;
+      padding: 16px;
+    }
+
+    .board-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .board-toolbar h2 {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .board-toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .ballroom-scroll {
+      overflow: auto;
+      border-radius: 22px;
+      border: 1px solid rgba(78, 57, 37, 0.08);
+      background: rgba(255,255,255,0.22);
+    }
+
+    .ballroom {
+      position: relative;
+      width: 1600px;
+      height: 1060px;
+      margin: 0 auto;
+      border: 14px solid var(--wall);
+      border-radius: 32px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(141, 98, 59, 0.1) 0,
+          rgba(141, 98, 59, 0.1) 2px,
+          transparent 2px,
+          transparent 72px
+        ),
+        linear-gradient(180deg, var(--floor-a), var(--floor-b));
+      overflow: hidden;
+    }
+
+    .ballroom::before,
+    .ballroom::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .ballroom::before {
+      background:
+        radial-gradient(circle at top center, rgba(255,255,255,0.24), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,0.16), transparent 20%);
+    }
+
+    .ballroom::after {
+      border: 1px solid rgba(93, 70, 43, 0.1);
+      border-radius: 18px;
+      inset: 10px;
+    }
+
+    .wall-label,
+    .zone-label {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      z-index: 1;
+      color: var(--muted);
+    }
+
+    .wall-label {
+      left: 12%;
+      width: 76%;
+      height: 66px;
+      background: rgba(255,255,255,0.42);
+      border: 1px solid rgba(81, 61, 41, 0.08);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+    }
+
+    .wall-label.front {
+      top: 0;
+      border-radius: 0 0 24px 24px;
+      border-top: 0;
+    }
+
+    .wall-label.back {
+      bottom: 0;
+      border-radius: 24px 24px 0 0;
+      border-bottom: 0;
+      background: rgba(88, 64, 39, 0.08);
+    }
+
+    .zone-label.sweetheart {
+      top: 86px;
+      left: 610px;
+      width: 380px;
+      height: 72px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, var(--sweetheart-a), var(--sweetheart-b));
+      color: #6f462f;
+      font-weight: 700;
+      border: 1px solid rgba(79, 58, 39, 0.1);
+    }
+
+    .zone-label.dance-floor {
+      top: 320px;
+      left: 560px;
+      width: 480px;
+      height: 320px;
+      border-radius: 28px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
+        linear-gradient(transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
+        linear-gradient(135deg, var(--dance-a), var(--dance-b));
+      color: #fff8f1;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .aisle {
+      position: absolute;
+      background: rgba(255,255,255,0.26);
+      border-radius: 999px;
+      z-index: 0;
+    }
+
+    .aisle.vertical {
+      left: 775px;
+      top: 165px;
+      width: 50px;
+      height: 760px;
+    }
+
+    .aisle.horizontal {
+      left: 180px;
+      top: 470px;
+      width: 1240px;
+      height: 44px;
+    }
+
+    .tables-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .table {
+      position: absolute;
+      width: 142px;
+      height: 142px;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .table-core {
+      position: absolute;
+      inset: 18px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, var(--table-a), rgba(255,255,255,0.88) 58%, var(--table-b));
+      border: 5px solid var(--table-ring);
+      box-shadow:
+        0 12px 20px rgba(92, 67, 41, 0.18),
+        inset 0 0 0 8px rgba(255,255,255,0.55);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .table-number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.04em;
+    }
+
+    .table-capacity {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .seat {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px solid var(--seat-border);
+      background: var(--seat);
+      box-shadow: 0 3px 6px rgba(86, 63, 39, 0.08);
+      display: grid;
+      place-items: center;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      overflow: hidden;
+      text-indent: -9999px;
+      white-space: nowrap;
+    }
+
+    .seat::after {
+      content: attr(data-seat-label);
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      text-indent: 0;
+      color: rgba(81, 61, 40, 0.42);
+      font-size: 0.58rem;
+      letter-spacing: 0.05em;
+    }
+
+    .seat.assigned {
+      text-indent: 0;
+      box-shadow: 0 6px 12px rgba(67, 50, 32, 0.16);
+    }
+
+    .seat.assigned::after {
+      display: none;
+    }
+
+    .seat.drag-over {
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 0 0 5px rgba(255,255,255,0.42);
+      background: var(--empty-drop);
+    }
+
+    .table.selected .table-core {
+      box-shadow:
+        0 0 0 6px rgba(255,255,255,0.7),
+        0 14px 24px rgba(92, 67, 41, 0.2),
+        inset 0 0 0 8px rgba(255,255,255,0.55);
+    }
+
+    .sidebar {
+      border-radius: 26px;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      grid-template-rows: auto auto auto minmax(420px, 1fr) auto auto;
+      max-height: calc(100vh - 56px);
+      position: sticky;
+      top: 18px;
+      overflow: auto;
+    }
+
+    .sidebar-header {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sidebar h2,
+    .sidebar h3 {
+      margin: 0;
+    }
+
+    .sidebar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .controls input {
+      width: 100%;
+      border: 1px solid rgba(76, 58, 37, 0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.84);
+      color: var(--ink);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .button-row button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: #6f8a7a;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .button-row button.secondary {
+      background: rgba(89, 68, 46, 0.12);
+      color: var(--ink);
+    }
+
+    .drop-home {
+      border: 1px dashed rgba(76, 58, 37, 0.22);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255,255,255,0.44);
+      color: var(--muted);
+      text-align: center;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .drop-home.drag-over {
+      background: rgba(111, 138, 122, 0.12);
+      border-color: rgba(84, 116, 89, 0.5);
+    }
+
+    .selected-table {
+      border: 1px solid rgba(76, 58, 37, 0.08);
+      border-radius: 20px;
+      background: var(--paper);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .selected-table-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .seat-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .seat-row {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(92, 69, 45, 0.04);
+    }
+
+    .seat-row .slot {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .guest-board {
+      overflow: auto;
+      min-height: 420px;
+      padding-right: 4px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .group-mat {
+      border-radius: 20px;
+      padding: 12px;
+      border: 1px solid rgba(76, 58, 37, 0.08);
+      background: var(--paper);
+      display: grid;
+      gap: 8px;
+    }
+
+    .group-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .group-title strong {
+      font-size: 0.96rem;
+    }
+
+    .group-title span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .chip-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .guest-chip {
+      border: 0;
+      border-radius: 16px;
+      padding: 10px 12px;
+      color: #fff;
+      cursor: grab;
+      box-shadow: 0 8px 14px rgba(83, 61, 39, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .guest-chip .name {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .guest-chip:active {
+      cursor: grabbing;
+    }
+
+    .guest-chip .status {
+      font-size: 0.68rem;
+      opacity: 0.86;
+      background: rgba(255,255,255,0.18);
+      padding: 3px 6px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .guest-chip.assigned {
+      filter: saturate(0.84);
+      opacity: 0.82;
+    }
+
+    .empty-state {
+      padding: 16px;
+      text-align: center;
+      border-radius: 16px;
+      background: rgba(93, 70, 43, 0.04);
+      color: var(--muted);
+    }
+
+    .app-note {
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(76, 58, 37, 0.08);
+    }
+
+    .error {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(183, 93, 78, 0.12);
+      color: #7f3d34;
+      border: 1px solid rgba(183, 93, 78, 0.18);
+    }
+
+    @media (max-width: 1180px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page {
+        padding: 16px 12px 24px;
+      }
+
+      .board,
+      .sidebar {
+        border-radius: 22px;
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      .button-row button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="eyebrow">Interactive Seating Planner</div>
+      <h1>Jenna & Tyler Ballroom Seating</h1>
+      <p>
+        Drag guest names from the placemat board onto table seats, move them between tables, or drag them back to the
+        guest board to unseat them. Table assignments save automatically in your browser.
+      </p>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <section class="shell">
+      <section class="board">
+        <div class="board-toolbar">
+          <div>
+            <h2>Top View Ballroom</h2>
+            <p>29 numbered tables, 8 seats per table, centered around the dance floor.</p>
+          </div>
+          <p>Click a table to inspect its roster.</p>
+        </div>
+        <div class="ballroom-scroll">
+          <div class="ballroom" id="ballroom">
+            <div class="wall-label front">Window Wall / Mountain View Side</div>
+            <div class="wall-label back">Back Wall</div>
+            <div class="zone-label sweetheart">Sweetheart Table</div>
+            <div class="zone-label dance-floor">Dance Floor</div>
+            <div class="aisle vertical"></div>
+            <div class="aisle horizontal"></div>
+            <div class="tables-layer" id="tables-layer"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Guest Column</h2>
+          <p>Guests stay in a vertical list on the right so you can drag them straight onto the tables. Colors still match each category.</p>
+        </div>
+
+        <div class="controls">
+          <input id="search" type="search" placeholder="Search guest names" aria-label="Search guest names" />
+          <div class="button-row">
+            <button id="clear-search" class="secondary" type="button">Clear Search</button>
+            <button id="reset-layout" type="button">Reset Seating</button>
+          </div>
+        </div>
+
+        <div class="app-note" id="app-note">
+          Loading guest data.
+        </div>
+
+        <div class="guest-board" id="guest-board"></div>
+
+        <div class="drop-home" id="drop-home">
+          Drop a guest here to remove them from a table and return them to the unseated pool.
+        </div>
+
+        <section class="selected-table" id="selected-table"></section>
+      </aside>
+    </section>
+  </main>
+
+  <script id="embedded-guest-data" type="application/json">[{"guest_id":1,"name":"Michelle Royce","group":"Cregg","source_column":"A","source_row":2,"is_plus_one":false},{"guest_id":2,"name":"Donna Williams","group":"Cregg","source_column":"A","source_row":3,"is_plus_one":false},{"guest_id":3,"name":"Stephen Williams","group":"Cregg","source_column":"A","source_row":4,"is_plus_one":false},{"guest_id":4,"name":"Paul Williams","group":"Cregg","source_column":"A","source_row":5,"is_plus_one":false},{"guest_id":5,"name":"Annaluze Williams","group":"Cregg","source_column":"A","source_row":6,"is_plus_one":false},{"guest_id":6,"name":"Brayden Williams","group":"Cregg","source_column":"A","source_row":7,"is_plus_one":false},{"guest_id":7,"name":"Kieran Williams","group":"Cregg","source_column":"A","source_row":8,"is_plus_one":false},{"guest_id":8,"name":"Fiona Williams","group":"Cregg","source_column":"A","source_row":9,"is_plus_one":false},{"guest_id":9,"name":"Kerri Regan","group":"Cregg","source_column":"A","source_row":10,"is_plus_one":false},{"guest_id":10,"name":"Patrick Regan","group":"Cregg","source_column":"A","source_row":11,"is_plus_one":false},{"guest_id":11,"name":"Grace Regan","group":"Cregg","source_column":"A","source_row":12,"is_plus_one":false},{"guest_id":12,"name":"Ann Marie Fallon","group":"Cregg","source_column":"A","source_row":13,"is_plus_one":false},{"guest_id":13,"name":"Miles Hersey","group":"Cregg","source_column":"A","source_row":14,"is_plus_one":false},{"guest_id":14,"name":"Chris Fallon","group":"Cregg","source_column":"A","source_row":15,"is_plus_one":false},{"guest_id":15,"name":"Kerry Fallon","group":"Cregg","source_column":"A","source_row":16,"is_plus_one":false},{"guest_id":16,"name":"Brendan Fallon","group":"Cregg","source_column":"A","source_row":17,"is_plus_one":false},{"guest_id":17,"name":"Ryan Fallon","group":"Cregg","source_column":"A","source_row":18,"is_plus_one":false},{"guest_id":18,"name":"Dan Fallon","group":"Cregg","source_column":"A","source_row":19,"is_plus_one":false},{"guest_id":19,"name":"Laura Fallon","group":"Cregg","source_column":"A","source_row":20,"is_plus_one":false},{"guest_id":20,"name":"Blake Fallon","group":"Cregg","source_column":"A","source_row":21,"is_plus_one":false},{"guest_id":21,"name":"Zach Fallon","group":"Cregg","source_column":"A","source_row":22,"is_plus_one":false},{"guest_id":22,"name":"Callie Fallon","group":"Cregg","source_column":"A","source_row":23,"is_plus_one":false},{"guest_id":23,"name":"Barbie Dellorco","group":"Cregg","source_column":"A","source_row":24,"is_plus_one":false},{"guest_id":24,"name":"Albie Dellorco","group":"Cregg","source_column":"A","source_row":25,"is_plus_one":false},{"guest_id":25,"name":"Jamie Hanley","group":"Cregg","source_column":"A","source_row":26,"is_plus_one":false},{"guest_id":26,"name":"Ryan Hanley","group":"Cregg","source_column":"A","source_row":27,"is_plus_one":false},{"guest_id":27,"name":"Rocco Hanley","group":"Cregg","source_column":"A","source_row":28,"is_plus_one":false},{"guest_id":28,"name":"Jake Dellorco","group":"Cregg","source_column":"A","source_row":29,"is_plus_one":false},{"guest_id":29,"name":"Meredith Dellorco","group":"Cregg","source_column":"A","source_row":30,"is_plus_one":false},{"guest_id":30,"name":"Brynn Dellorco","group":"Cregg","source_column":"A","source_row":31,"is_plus_one":false},{"guest_id":31,"name":"Jason Dellorco","group":"Cregg","source_column":"A","source_row":32,"is_plus_one":false},{"guest_id":32,"name":"Meghan Dellorco","group":"Cregg","source_column":"A","source_row":33,"is_plus_one":false},{"guest_id":33,"name":"Julian Dellorco","group":"Cregg","source_column":"A","source_row":34,"is_plus_one":false},{"guest_id":34,"name":"Johnny Cregg","group":"Cregg","source_column":"A","source_row":35,"is_plus_one":false},{"guest_id":35,"name":"Kristen Rampino","group":"Cregg","source_column":"A","source_row":36,"is_plus_one":false},{"guest_id":36,"name":"Leanna Cregg","group":"Cregg","source_column":"A","source_row":37,"is_plus_one":false},{"guest_id":37,"name":"Alex Cregg","group":"Cregg","source_column":"A","source_row":38,"is_plus_one":false},{"guest_id":38,"name":"Chris Royce","group":"Royce","source_column":"B","source_row":2,"is_plus_one":false},{"guest_id":39,"name":"Miki Royce","group":"Royce","source_column":"B","source_row":3,"is_plus_one":false},{"guest_id":40,"name":"Patricia Powers","group":"Royce","source_column":"B","source_row":4,"is_plus_one":false},{"guest_id":41,"name":"John Royce","group":"Royce","source_column":"B","source_row":5,"is_plus_one":false},{"guest_id":42,"name":"Maddy Royce","group":"Royce","source_column":"B","source_row":6,"is_plus_one":false},{"guest_id":43,"name":"Eric Royce","group":"Royce","source_column":"B","source_row":7,"is_plus_one":false},{"guest_id":44,"name":"Eric +1","group":"Royce","source_column":"B","source_row":8,"is_plus_one":true},{"guest_id":45,"name":"Jimmy Royce","group":"Royce","source_column":"B","source_row":9,"is_plus_one":false},{"guest_id":46,"name":"Teaganne Finn","group":"Royce","source_column":"B","source_row":10,"is_plus_one":false},{"guest_id":47,"name":"Patrick Royce","group":"Royce","source_column":"B","source_row":11,"is_plus_one":false},{"guest_id":48,"name":"Jessica Royce","group":"Royce","source_column":"B","source_row":12,"is_plus_one":false},{"guest_id":49,"name":"Aidan Royce","group":"Royce","source_column":"B","source_row":13,"is_plus_one":false},{"guest_id":50,"name":"Aidan +1","group":"Royce","source_column":"B","source_row":14,"is_plus_one":true},{"guest_id":51,"name":"Connor Royce","group":"Royce","source_column":"B","source_row":15,"is_plus_one":false},{"guest_id":52,"name":"Stella Optipoby","group":"Royce","source_column":"B","source_row":16,"is_plus_one":false},{"guest_id":53,"name":"Jeremy McGarry","group":"Royce","source_column":"B","source_row":17,"is_plus_one":false},{"guest_id":54,"name":"Josh McGarry","group":"Royce","source_column":"B","source_row":18,"is_plus_one":false},{"guest_id":55,"name":"Juliette Royce","group":"Royce","source_column":"B","source_row":19,"is_plus_one":false},{"guest_id":56,"name":"Adam Royce","group":"Royce","source_column":"B","source_row":20,"is_plus_one":false},{"guest_id":57,"name":"Sarah Royce","group":"Royce","source_column":"B","source_row":21,"is_plus_one":false},{"guest_id":58,"name":"Ella Royce","group":"Royce","source_column":"B","source_row":22,"is_plus_one":false},{"guest_id":59,"name":"Olivia Royce","group":"Royce","source_column":"B","source_row":23,"is_plus_one":false},{"guest_id":60,"name":"Jenny Rhodes","group":"Royce","source_column":"B","source_row":24,"is_plus_one":false},{"guest_id":61,"name":"Bastie Castello","group":"Royce","source_column":"B","source_row":25,"is_plus_one":false},{"guest_id":62,"name":"Jace Castello","group":"Royce","source_column":"B","source_row":26,"is_plus_one":false},{"guest_id":63,"name":"Paige Castello","group":"Royce","source_column":"B","source_row":27,"is_plus_one":false},{"guest_id":64,"name":"Jane Flink","group":"Royce","source_column":"B","source_row":28,"is_plus_one":false},{"guest_id":65,"name":"Rob Flink","group":"Royce","source_column":"B","source_row":29,"is_plus_one":false},{"guest_id":66,"name":"Bonnie Flink","group":"Royce","source_column":"B","source_row":30,"is_plus_one":false},{"guest_id":67,"name":"Chloe Flink","group":"Royce","source_column":"B","source_row":31,"is_plus_one":false},{"guest_id":68,"name":"Cameron Flink","group":"Royce","source_column":"B","source_row":32,"is_plus_one":false},{"guest_id":69,"name":"Allison Carey","group":"Royce","source_column":"B","source_row":33,"is_plus_one":false},{"guest_id":70,"name":"Dustin Carey","group":"Royce","source_column":"B","source_row":34,"is_plus_one":false},{"guest_id":71,"name":"JD Carey","group":"Royce","source_column":"B","source_row":35,"is_plus_one":false},{"guest_id":72,"name":"Addison Carey","group":"Royce","source_column":"B","source_row":36,"is_plus_one":false},{"guest_id":73,"name":"Dan Flink","group":"Royce","source_column":"B","source_row":37,"is_plus_one":false},{"guest_id":74,"name":"Jeni Flink","group":"Royce","source_column":"B","source_row":38,"is_plus_one":false},{"guest_id":75,"name":"Emma Flink","group":"Royce","source_column":"B","source_row":39,"is_plus_one":false},{"guest_id":76,"name":"Jacob Flink","group":"Royce","source_column":"B","source_row":40,"is_plus_one":false},{"guest_id":77,"name":"Linda Mahler","group":"Royce","source_column":"B","source_row":41,"is_plus_one":false},{"guest_id":78,"name":"Keith Mahler","group":"Royce","source_column":"B","source_row":42,"is_plus_one":false},{"guest_id":79,"name":"Keith Mahler","group":"Royce","source_column":"B","source_row":43,"is_plus_one":false},{"guest_id":80,"name":"Christine Mahler","group":"Royce","source_column":"B","source_row":44,"is_plus_one":false},{"guest_id":81,"name":"Ty Mahler","group":"Royce","source_column":"B","source_row":45,"is_plus_one":false},{"guest_id":82,"name":"Ty +1","group":"Royce","source_column":"B","source_row":46,"is_plus_one":true},{"guest_id":83,"name":"Emily Mahler","group":"Royce","source_column":"B","source_row":47,"is_plus_one":false},{"guest_id":84,"name":"Emily +1","group":"Royce","source_column":"B","source_row":48,"is_plus_one":true},{"guest_id":85,"name":"Julia Mahler","group":"Royce","source_column":"B","source_row":49,"is_plus_one":false},{"guest_id":86,"name":"Julia +1","group":"Royce","source_column":"B","source_row":50,"is_plus_one":true},{"guest_id":87,"name":"Brian Mahler","group":"Royce","source_column":"B","source_row":51,"is_plus_one":false},{"guest_id":88,"name":"Chen Chang","group":"Royce","source_column":"B","source_row":52,"is_plus_one":false},{"guest_id":89,"name":"Abby Mahler","group":"Royce","source_column":"B","source_row":53,"is_plus_one":false},{"guest_id":90,"name":"Kelly Royce","group":"Royce","source_column":"B","source_row":54,"is_plus_one":false},{"guest_id":91,"name":"Kelly +1","group":"Royce","source_column":"B","source_row":55,"is_plus_one":true},{"guest_id":92,"name":"Jon Lyster","group":"Lyster","source_column":"C","source_row":2,"is_plus_one":false},{"guest_id":93,"name":"Jon +1","group":"Lyster","source_column":"C","source_row":3,"is_plus_one":true},{"guest_id":94,"name":"Jeff Lyster","group":"Lyster","source_column":"C","source_row":4,"is_plus_one":false},{"guest_id":95,"name":"Theresa Lyster","group":"Lyster","source_column":"C","source_row":5,"is_plus_one":false},{"guest_id":96,"name":"Wendy Lyster","group":"Horst","source_column":"D","source_row":2,"is_plus_one":false},{"guest_id":97,"name":"Theresa Horst","group":"Horst","source_column":"D","source_row":3,"is_plus_one":false},{"guest_id":98,"name":"Dick Horst","group":"Horst","source_column":"D","source_row":4,"is_plus_one":false},{"guest_id":99,"name":"Andy Horst","group":"Horst","source_column":"D","source_row":5,"is_plus_one":false},{"guest_id":100,"name":"Sarah Horst","group":"Horst","source_column":"D","source_row":6,"is_plus_one":false},{"guest_id":101,"name":"Anita Norman","group":"Horst","source_column":"D","source_row":7,"is_plus_one":false},{"guest_id":102,"name":"Sarah Crossingham","group":"Horst","source_column":"D","source_row":8,"is_plus_one":false},{"guest_id":103,"name":"Ryan Crossingham","group":"Horst","source_column":"D","source_row":9,"is_plus_one":false},{"guest_id":104,"name":"Beckett Crossingham","group":"Horst","source_column":"D","source_row":10,"is_plus_one":false},{"guest_id":105,"name":"Harper Crossingham","group":"Horst","source_column":"D","source_row":11,"is_plus_one":false},{"guest_id":106,"name":"Nick Horst","group":"Horst","source_column":"D","source_row":12,"is_plus_one":false},{"guest_id":107,"name":"Lea Pascal","group":"Horst","source_column":"D","source_row":13,"is_plus_one":false},{"guest_id":108,"name":"Graham Horst","group":"Horst","source_column":"D","source_row":14,"is_plus_one":false},{"guest_id":109,"name":"Nies Volmer","group":"Horst","source_column":"D","source_row":15,"is_plus_one":false},{"guest_id":110,"name":"Neil Volmer","group":"Horst","source_column":"D","source_row":16,"is_plus_one":false},{"guest_id":111,"name":"Lisa Niedwiecki","group":"Horst","source_column":"D","source_row":17,"is_plus_one":false},{"guest_id":112,"name":"Mark Niedwiecki","group":"Horst","source_column":"D","source_row":18,"is_plus_one":false},{"guest_id":113,"name":"Mark Jr Niedwiecki","group":"Horst","source_column":"D","source_row":19,"is_plus_one":false},{"guest_id":114,"name":"Leanna Niedwiecki","group":"Horst","source_column":"D","source_row":20,"is_plus_one":false},{"guest_id":115,"name":"Phillip Hunt","group":"Horst","source_column":"D","source_row":21,"is_plus_one":false},{"guest_id":116,"name":"Marlene Hunt","group":"Horst","source_column":"D","source_row":22,"is_plus_one":false},{"guest_id":117,"name":"Isabella Hunt","group":"Horst","source_column":"D","source_row":23,"is_plus_one":false},{"guest_id":118,"name":"Isabella +1","group":"Horst","source_column":"D","source_row":24,"is_plus_one":true},{"guest_id":119,"name":"Olivia Arends","group":"Horst","source_column":"D","source_row":25,"is_plus_one":false},{"guest_id":120,"name":"Zach Arends","group":"Horst","source_column":"D","source_row":26,"is_plus_one":false},{"guest_id":121,"name":"Evelyn Arends","group":"Horst","source_column":"D","source_row":27,"is_plus_one":false},{"guest_id":122,"name":"Chris Horst","group":"Horst","source_column":"D","source_row":28,"is_plus_one":false},{"guest_id":123,"name":"Morgan Horst","group":"Horst","source_column":"D","source_row":29,"is_plus_one":false},{"guest_id":124,"name":"Teddy Horst","group":"Horst","source_column":"D","source_row":30,"is_plus_one":false},{"guest_id":125,"name":"Robby Stone","group":"Horst","source_column":"D","source_row":31,"is_plus_one":false},{"guest_id":126,"name":"Mallory Stone","group":"Horst","source_column":"D","source_row":32,"is_plus_one":false},{"guest_id":127,"name":"Dylan Stone","group":"Horst","source_column":"D","source_row":33,"is_plus_one":false},{"guest_id":128,"name":"Skylar Stone","group":"Horst","source_column":"D","source_row":34,"is_plus_one":false},{"guest_id":129,"name":"TJ Lyster","group":"Horst","source_column":"D","source_row":35,"is_plus_one":false},{"guest_id":130,"name":"Emilee Parrish","group":"Horst","source_column":"D","source_row":36,"is_plus_one":false},{"guest_id":131,"name":"Jaquelle Riggs","group":"Family Friends","source_column":"E","source_row":2,"is_plus_one":false},{"guest_id":132,"name":"Phil Riggs","group":"Family Friends","source_column":"E","source_row":3,"is_plus_one":false},{"guest_id":133,"name":"Vivi Riggs","group":"Family Friends","source_column":"E","source_row":4,"is_plus_one":false},{"guest_id":134,"name":"Evie Riggs","group":"Family Friends","source_column":"E","source_row":5,"is_plus_one":false},{"guest_id":135,"name":"Max Riggs","group":"Family Friends","source_column":"E","source_row":6,"is_plus_one":false},{"guest_id":136,"name":"Vika Williamson","group":"Family Friends","source_column":"E","source_row":7,"is_plus_one":false},{"guest_id":137,"name":"Milana","group":"Family Friends","source_column":"E","source_row":8,"is_plus_one":false},{"guest_id":138,"name":"Alex","group":"Family Friends","source_column":"E","source_row":9,"is_plus_one":false},{"guest_id":139,"name":"Ann Simpson","group":"Family Friends","source_column":"E","source_row":10,"is_plus_one":false},{"guest_id":140,"name":"Aju Fenn","group":"Family Friends","source_column":"E","source_row":11,"is_plus_one":false},{"guest_id":141,"name":"Julia Fenn","group":"Family Friends","source_column":"E","source_row":12,"is_plus_one":false},{"guest_id":142,"name":"Eric Everard","group":"Family Friends","source_column":"E","source_row":13,"is_plus_one":false},{"guest_id":143,"name":"Missy Everard","group":"Family Friends","source_column":"E","source_row":14,"is_plus_one":false},{"guest_id":144,"name":"John Pignataro","group":"Family Friends","source_column":"E","source_row":15,"is_plus_one":false},{"guest_id":145,"name":"John +1","group":"Family Friends","source_column":"E","source_row":16,"is_plus_one":true},{"guest_id":146,"name":"James Hart","group":"Family Friends","source_column":"E","source_row":17,"is_plus_one":false},{"guest_id":147,"name":"Layla Hart","group":"Family Friends","source_column":"E","source_row":18,"is_plus_one":false},{"guest_id":148,"name":"Jessica Hart","group":"Family Friends","source_column":"E","source_row":19,"is_plus_one":false},{"guest_id":149,"name":"Jayla Hart","group":"Family Friends","source_column":"E","source_row":20,"is_plus_one":false},{"guest_id":150,"name":"Miles Hart","group":"Family Friends","source_column":"E","source_row":21,"is_plus_one":false},{"guest_id":151,"name":"Trey Hart","group":"Family Friends","source_column":"E","source_row":22,"is_plus_one":false},{"guest_id":152,"name":"Hunter Johnson","group":"Family Friends","source_column":"E","source_row":23,"is_plus_one":false},{"guest_id":153,"name":"Ellis Hart","group":"Family Friends","source_column":"E","source_row":24,"is_plus_one":false},{"guest_id":154,"name":"Jazdia Cole","group":"Family Friends","source_column":"E","source_row":25,"is_plus_one":false},{"guest_id":155,"name":"Gerry Barr","group":"Family Friends","source_column":"E","source_row":26,"is_plus_one":false},{"guest_id":156,"name":"Debbie Barr","group":"Family Friends","source_column":"E","source_row":27,"is_plus_one":false},{"guest_id":157,"name":"Jack Barr","group":"Family Friends","source_column":"E","source_row":28,"is_plus_one":false},{"guest_id":158,"name":"Jessica Mulkins","group":"Family Friends","source_column":"E","source_row":29,"is_plus_one":false},{"guest_id":159,"name":"Rowan Barr","group":"Family Friends","source_column":"E","source_row":30,"is_plus_one":false},{"guest_id":160,"name":"Liv Barr","group":"Family Friends","source_column":"E","source_row":31,"is_plus_one":false},{"guest_id":161,"name":"Liv +1","group":"Family Friends","source_column":"E","source_row":32,"is_plus_one":true},{"guest_id":162,"name":"Renee Riddle","group":"Family Friends","source_column":"E","source_row":33,"is_plus_one":false},{"guest_id":163,"name":"Clayton Riddle","group":"Family Friends","source_column":"E","source_row":34,"is_plus_one":false},{"guest_id":164,"name":"Quinton Riddle","group":"Family Friends","source_column":"E","source_row":35,"is_plus_one":false},{"guest_id":165,"name":"Quinton +1","group":"Family Friends","source_column":"E","source_row":36,"is_plus_one":true},{"guest_id":166,"name":"Arden Riddle","group":"Family Friends","source_column":"E","source_row":37,"is_plus_one":false},{"guest_id":167,"name":"Jake Dixon","group":"Family Friends","source_column":"E","source_row":38,"is_plus_one":false},{"guest_id":168,"name":"Payton Riddle","group":"Family Friends","source_column":"E","source_row":39,"is_plus_one":false},{"guest_id":169,"name":"Michael Hammer","group":"Family Friends","source_column":"E","source_row":40,"is_plus_one":false},{"guest_id":170,"name":"Deb Herchenbach","group":"Family Friends","source_column":"E","source_row":41,"is_plus_one":false},{"guest_id":171,"name":"Jim Herchenbach","group":"Family Friends","source_column":"E","source_row":42,"is_plus_one":false},{"guest_id":172,"name":"Patrick Herchenbach","group":"Family Friends","source_column":"E","source_row":43,"is_plus_one":false},{"guest_id":173,"name":"Chris Garcia","group":"Family Friends","source_column":"E","source_row":44,"is_plus_one":false},{"guest_id":174,"name":"Carrie Walters","group":"Family Friends","source_column":"E","source_row":45,"is_plus_one":false},{"guest_id":175,"name":"Hannah Walters","group":"Family Friends","source_column":"E","source_row":46,"is_plus_one":false},{"guest_id":176,"name":"Ryan Trembath","group":"Family Friends","source_column":"E","source_row":47,"is_plus_one":false},{"guest_id":177,"name":"Eve Jones","group":"Family Friends","source_column":"E","source_row":48,"is_plus_one":false},{"guest_id":178,"name":"Tim Jones","group":"Family Friends","source_column":"E","source_row":49,"is_plus_one":false},{"guest_id":179,"name":"Nikki Relich","group":"Family Friends","source_column":"E","source_row":50,"is_plus_one":false},{"guest_id":180,"name":"Brian Relich","group":"Family Friends","source_column":"E","source_row":51,"is_plus_one":false},{"guest_id":181,"name":"Paetyn Relich","group":"Family Friends","source_column":"E","source_row":52,"is_plus_one":false},{"guest_id":182,"name":"Travis Baxter","group":"Family Friends","source_column":"E","source_row":53,"is_plus_one":false},{"guest_id":183,"name":"Morghan Relich","group":"Family Friends","source_column":"E","source_row":54,"is_plus_one":false},{"guest_id":184,"name":"Tulio Pe\u00f1a","group":"Family Friends","source_column":"E","source_row":55,"is_plus_one":false},{"guest_id":185,"name":"Dena Pe\u00f1a","group":"Family Friends","source_column":"E","source_row":56,"is_plus_one":false},{"guest_id":186,"name":"Avery Pe\u00f1a","group":"Family Friends","source_column":"E","source_row":57,"is_plus_one":false},{"guest_id":187,"name":"Caleb Pe\u00f1a","group":"Family Friends","source_column":"E","source_row":58,"is_plus_one":false},{"guest_id":188,"name":"Livia Pe\u00f1a","group":"Family Friends","source_column":"E","source_row":59,"is_plus_one":false},{"guest_id":189,"name":"Cory Davis","group":"Family Friends","source_column":"E","source_row":60,"is_plus_one":false},{"guest_id":190,"name":"Sarah Nordquist-Davis","group":"Family Friends","source_column":"E","source_row":61,"is_plus_one":false},{"guest_id":191,"name":"Joy Egr","group":"Family Friends","source_column":"E","source_row":62,"is_plus_one":false},{"guest_id":192,"name":"Michael Egr","group":"Family Friends","source_column":"E","source_row":63,"is_plus_one":false},{"guest_id":193,"name":"Debbie Rice","group":"Family Friends","source_column":"E","source_row":64,"is_plus_one":false},{"guest_id":194,"name":"Sue Gibson","group":"Family Friends","source_column":"E","source_row":65,"is_plus_one":false},{"guest_id":195,"name":"KoriAnne Morelander","group":"Friends","source_column":"F","source_row":2,"is_plus_one":false},{"guest_id":196,"name":"KoriAnne +1","group":"Friends","source_column":"F","source_row":3,"is_plus_one":true},{"guest_id":197,"name":"Gabbi Catio","group":"Friends","source_column":"F","source_row":4,"is_plus_one":false},{"guest_id":198,"name":"Gabbi +1","group":"Friends","source_column":"F","source_row":5,"is_plus_one":true},{"guest_id":199,"name":"Jordan Roderigez","group":"Friends","source_column":"F","source_row":6,"is_plus_one":false},{"guest_id":200,"name":"Ila Galvin","group":"Friends","source_column":"F","source_row":7,"is_plus_one":false},{"guest_id":201,"name":"Javon Minton","group":"Friends","source_column":"F","source_row":8,"is_plus_one":false},{"guest_id":202,"name":"Michael Curd","group":"Friends","source_column":"F","source_row":9,"is_plus_one":false},{"guest_id":203,"name":"Ted'dee Buffalo-Harrell","group":"Friends","source_column":"F","source_row":10,"is_plus_one":false},{"guest_id":204,"name":"Arlo Curd","group":"Friends","source_column":"F","source_row":11,"is_plus_one":false},{"guest_id":205,"name":"Reed Lujan","group":"Friends","source_column":"F","source_row":12,"is_plus_one":false},{"guest_id":206,"name":"Kaitlyn","group":"Friends","source_column":"F","source_row":13,"is_plus_one":false},{"guest_id":207,"name":"Addie Kuettner","group":"Friends","source_column":"F","source_row":14,"is_plus_one":false},{"guest_id":208,"name":"Ethan Witte","group":"Friends","source_column":"F","source_row":15,"is_plus_one":false},{"guest_id":209,"name":"Taela Gallegos","group":"Friends","source_column":"F","source_row":16,"is_plus_one":false},{"guest_id":210,"name":"Grayson Narlinger","group":"Friends","source_column":"F","source_row":17,"is_plus_one":false},{"guest_id":211,"name":"Kila Gallegos","group":"Friends","source_column":"F","source_row":18,"is_plus_one":false},{"guest_id":212,"name":"Ryan Endicott","group":"Friends","source_column":"F","source_row":19,"is_plus_one":false},{"guest_id":213,"name":"Ryan +1","group":"Friends","source_column":"F","source_row":20,"is_plus_one":true},{"guest_id":214,"name":"Dave Shields","group":"Friends","source_column":"F","source_row":21,"is_plus_one":false},{"guest_id":215,"name":"Tracy Shields","group":"Friends","source_column":"F","source_row":22,"is_plus_one":false},{"guest_id":216,"name":"Leo Revas","group":"Friends","source_column":"F","source_row":23,"is_plus_one":false},{"guest_id":217,"name":"Tony Le","group":"Friends","source_column":"F","source_row":24,"is_plus_one":false},{"guest_id":218,"name":"Tony +1","group":"Friends","source_column":"F","source_row":25,"is_plus_one":true},{"guest_id":219,"name":"Addy Waska","group":"Friends","source_column":"F","source_row":26,"is_plus_one":false},{"guest_id":220,"name":"Addy +1","group":"Friends","source_column":"F","source_row":27,"is_plus_one":true},{"guest_id":221,"name":"Collin Huedepohl","group":"Friends","source_column":"F","source_row":28,"is_plus_one":false},{"guest_id":222,"name":"Ally Mortensen","group":"Friends","source_column":"F","source_row":29,"is_plus_one":false},{"guest_id":223,"name":"Danielle Grimaldo","group":"Friends","source_column":"F","source_row":30,"is_plus_one":false},{"guest_id":224,"name":"Sam Martinez","group":"Friends","source_column":"F","source_row":31,"is_plus_one":false},{"guest_id":225,"name":"Raelyn Martinez","group":"Friends","source_column":"F","source_row":32,"is_plus_one":false},{"guest_id":226,"name":"Brinley Martinez","group":"Friends","source_column":"F","source_row":33,"is_plus_one":false},{"guest_id":227,"name":"Maverick Martinez","group":"Friends","source_column":"F","source_row":34,"is_plus_one":false},{"guest_id":228,"name":"Sadie Starkle","group":"Friends","source_column":"F","source_row":35,"is_plus_one":false},{"guest_id":229,"name":"Garrett Coester","group":"Friends","source_column":"F","source_row":36,"is_plus_one":false}]</script>
+  <script>
+    const TABLES = [
+      { id: 1, x: 170, y: 190 },
+      { id: 2, x: 340, y: 185 },
+      { id: 3, x: 510, y: 178 },
+      { id: 4, x: 1090, y: 178 },
+      { id: 5, x: 1260, y: 185 },
+      { id: 6, x: 1430, y: 190 },
+      { id: 7, x: 120, y: 330 },
+      { id: 8, x: 290, y: 320 },
+      { id: 9, x: 460, y: 310 },
+      { id: 10, x: 1140, y: 310 },
+      { id: 11, x: 1310, y: 320 },
+      { id: 12, x: 1480, y: 330 },
+      { id: 13, x: 95, y: 500 },
+      { id: 14, x: 265, y: 490 },
+      { id: 15, x: 435, y: 480 },
+      { id: 16, x: 1165, y: 480 },
+      { id: 17, x: 1335, y: 490 },
+      { id: 18, x: 1505, y: 500 },
+      { id: 19, x: 120, y: 690 },
+      { id: 20, x: 290, y: 680 },
+      { id: 21, x: 460, y: 670 },
+      { id: 22, x: 1140, y: 670 },
+      { id: 23, x: 1310, y: 680 },
+      { id: 24, x: 1480, y: 690 },
+      { id: 25, x: 210, y: 855 },
+      { id: 26, x: 410, y: 845 },
+      { id: 27, x: 610, y: 835 },
+      { id: 28, x: 990, y: 835 },
+      { id: 29, x: 1190, y: 845 }
+    ];
+
+    const GROUP_COLORS = {
+      "Cregg": "var(--cregg)",
+      "Royce": "var(--royce)",
+      "Lyster": "var(--lyster)",
+      "Horst": "var(--horst)",
+      "Family Friends": "var(--family-friends)",
+      "Friends": "var(--friends)"
+    };
+
+    const STORAGE_KEY = "jenna-tyler-seating-v1";
+    const API_LAYOUT_URL = "/api/layout";
+    const EMBEDDED_GUESTS = JSON.parse(document.getElementById("embedded-guest-data").textContent);
+
+    const state = {
+      guests: [],
+      assignments: {},
+      selectedTableId: 1,
+      search: "",
+      persistenceMode: "loading"
+    };
+
+    const statsEl = document.getElementById("stats");
+    const tablesLayerEl = document.getElementById("tables-layer");
+    const guestBoardEl = document.getElementById("guest-board");
+    const selectedTableEl = document.getElementById("selected-table");
+    const dropHomeEl = document.getElementById("drop-home");
+    const appNoteEl = document.getElementById("app-note");
+    const searchEl = document.getElementById("search");
+    const clearSearchEl = document.getElementById("clear-search");
+    const resetLayoutEl = document.getElementById("reset-layout");
+
+    function initialsFor(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("");
+    }
+
+    function colorForGroup(group) {
+      return GROUP_COLORS[group] || "var(--ink)";
+    }
+
+    function occupantForSeat(tableId, seatIndex) {
+      return state.guests.find((guest) => {
+        const assignment = state.assignments[guest.guest_id];
+        return assignment && assignment.tableId === tableId && assignment.seatIndex === seatIndex;
+      }) || null;
+    }
+
+    function assignmentLabel(guest) {
+      const assignment = state.assignments[guest.guest_id];
+      if (!assignment) {
+        return "Unseated";
+      }
+      return `T${assignment.tableId} S${assignment.seatIndex + 1}`;
+    }
+
+    function seatCountForTable(tableId) {
+      return state.guests.filter((guest) => {
+        const assignment = state.assignments[guest.guest_id];
+        return assignment && assignment.tableId === tableId;
+      }).length;
+    }
+
+    function setAppNote(message, isError = false) {
+      appNoteEl.innerHTML = isError ? `<div class="error">${message}</div>` : message;
+    }
+
+    function saveLocalAssignments() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.assignments));
+    }
+
+    function readSavedAssignmentsFromBrowser() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return null;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          return parsed;
+        }
+      } catch (error) {
+        console.warn("Unable to read saved seating assignments.", error);
+      }
+      return null;
+    }
+
+    async function persistAssignments() {
+      saveLocalAssignments();
+
+      try {
+        const response = await fetch(API_LAYOUT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ assignments: state.assignments })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        state.persistenceMode = "project-file";
+        setAppNote("Saving to <code>data/seating-layout.json</code> in this project. Your daughter can pull that file from GitHub and keep going.");
+      } catch (error) {
+        state.persistenceMode = "browser";
+        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist into <code>data/seating-layout.json</code>.");
+      }
+    }
+
+    async function loadAssignments() {
+      const browserAssignments = readSavedAssignmentsFromBrowser();
+
+      try {
+        const response = await fetch(API_LAYOUT_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const projectAssignments =
+          payload && typeof payload.assignments === "object" && payload.assignments !== null
+            ? payload.assignments
+            : {};
+
+        const projectHasAssignments = Object.values(projectAssignments).some((value) => value !== null);
+        const browserHasAssignments = browserAssignments && Object.values(browserAssignments).some((value) => value !== null);
+
+        if (!projectHasAssignments && browserHasAssignments) {
+          state.assignments = browserAssignments;
+          saveLocalAssignments();
+          state.persistenceMode = "project-file";
+          setAppNote("Migrated your existing browser seating into <code>data/seating-layout.json</code>. New changes will keep saving into the project.");
+          await persistAssignments();
+          return;
+        }
+
+        state.assignments = projectAssignments;
+        saveLocalAssignments();
+        state.persistenceMode = "project-file";
+        setAppNote("Loaded saved seating from <code>data/seating-layout.json</code>. New changes will keep saving into the project.");
+      } catch (error) {
+        state.assignments = browserAssignments || {};
+        state.persistenceMode = "browser";
+        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist into <code>data/seating-layout.json</code>.");
+      }
+    }
+
+    function setAssignment(guestId, targetTableId, targetSeatIndex) {
+      const current = state.assignments[guestId] || null;
+      const displacedGuest = occupantForSeat(targetTableId, targetSeatIndex);
+
+      if (current && current.tableId === targetTableId && current.seatIndex === targetSeatIndex) {
+        return;
+      }
+
+      state.assignments[guestId] = { tableId: targetTableId, seatIndex: targetSeatIndex };
+
+      if (displacedGuest && displacedGuest.guest_id !== guestId) {
+        if (current) {
+          state.assignments[displacedGuest.guest_id] = current;
+        } else {
+          state.assignments[displacedGuest.guest_id] = null;
+        }
+      }
+
+      void persistAssignments();
+      render();
+    }
+
+    function unassignGuest(guestId) {
+      state.assignments[guestId] = null;
+      void persistAssignments();
+      render();
+    }
+
+    function tableMarkup(table) {
+      const occupiedCount = seatCountForTable(table.id);
+      const seatRadius = 60;
+
+      const seats = Array.from({ length: 8 }, (_, seatIndex) => {
+        const angle = (Math.PI * 2 * seatIndex) / 8 - Math.PI / 2;
+        const x = 71 + Math.cos(angle) * seatRadius;
+        const y = 71 + Math.sin(angle) * seatRadius;
+        const guest = occupantForSeat(table.id, seatIndex);
+        const color = guest ? colorForGroup(guest.group) : "";
+        const title = guest ? `${guest.name} (${guest.group})` : `Table ${table.id}, seat ${seatIndex + 1}`;
+
+        return `
+          <button
+            class="seat ${guest ? "assigned" : ""}"
+            type="button"
+            data-table-id="${table.id}"
+            data-seat-index="${seatIndex}"
+            data-seat-label="${seatIndex + 1}"
+            data-guest-id="${guest ? guest.guest_id : ""}"
+            draggable="${guest ? "true" : "false"}"
+            title="${title}"
+            style="left:${x}px; top:${y}px; ${guest ? `background:${color}; border-color:${color};` : ""}"
+          >${guest ? initialsFor(guest.name) : ""}</button>
+        `;
+      }).join("");
+
+      return `
+        <div class="table ${state.selectedTableId === table.id ? "selected" : ""}" data-table-id="${table.id}" style="left:${table.x}px; top:${table.y}px;">
+          ${seats}
+          <button class="table-core" type="button" data-table-select="${table.id}" title="Select table ${table.id}">
+            <div>
+              <div class="table-number">${table.id}</div>
+              <div class="table-capacity">${occupiedCount}/8</div>
+            </div>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderTables() {
+      tablesLayerEl.innerHTML = TABLES.map(tableMarkup).join("");
+    }
+
+    function renderStats() {
+      const assignedCount = state.guests.filter((guest) => state.assignments[guest.guest_id]).length;
+      const unassignedCount = state.guests.length - assignedCount;
+      const filledTables = TABLES.filter((table) => seatCountForTable(table.id) > 0).length;
+
+      statsEl.innerHTML = `
+        <div class="stat">${state.guests.length} guests loaded</div>
+        <div class="stat">${TABLES.length} tables</div>
+        <div class="stat">${TABLES.length * 8} available seats</div>
+        <div class="stat">${assignedCount} seated</div>
+        <div class="stat">${unassignedCount} unseated</div>
+        <div class="stat">${filledTables} active tables</div>
+      `;
+    }
+
+    function renderSelectedTable() {
+      const tableId = state.selectedTableId;
+      const table = TABLES.find((entry) => entry.id === tableId) || TABLES[0];
+      const seatRows = Array.from({ length: 8 }, (_, seatIndex) => {
+        const guest = occupantForSeat(table.id, seatIndex);
+        const display = guest
+          ? `<span style="color:${colorForGroup(guest.group)}; font-weight:700;">${guest.name}</span>`
+          : `<span style="color:var(--muted);">Empty seat</span>`;
+        return `
+          <div class="seat-row">
+            <div class="slot">Seat ${seatIndex + 1}</div>
+            <div>${display}</div>
+          </div>
+        `;
+      }).join("");
+
+      selectedTableEl.innerHTML = `
+        <div class="selected-table-header">
+          <h3>Table ${table.id}</h3>
+          <span>${seatCountForTable(table.id)}/8 seated</span>
+        </div>
+        <div class="seat-list">${seatRows}</div>
+      `;
+    }
+
+    function groupGuests(guests) {
+      const grouped = new Map();
+      guests.forEach((guest) => {
+        if (!grouped.has(guest.group)) {
+          grouped.set(guest.group, []);
+        }
+        grouped.get(guest.group).push(guest);
+      });
+      return grouped;
+    }
+
+    function renderGuestBoard() {
+      const search = state.search.trim().toLowerCase();
+      const filteredGuests = state.guests.filter((guest) => guest.name.toLowerCase().includes(search));
+      const grouped = groupGuests(filteredGuests);
+
+      if (!filteredGuests.length) {
+        guestBoardEl.innerHTML = `<div class="empty-state">No guests match that search.</div>`;
+        return;
+      }
+
+      guestBoardEl.innerHTML = Array.from(grouped.entries()).map(([groupName, guests]) => {
+        const assignedCount = guests.filter((guest) => state.assignments[guest.guest_id]).length;
+        const chips = guests.map((guest) => `
+          <button
+            class="guest-chip ${state.assignments[guest.guest_id] ? "assigned" : ""}"
+            type="button"
+            draggable="true"
+            data-guest-id="${guest.guest_id}"
+            style="background:${colorForGroup(groupName)};"
+            title="${guest.name} (${groupName})"
+          >
+            <span class="name">${guest.name}</span>
+            <span class="status">${assignmentLabel(guest)}</span>
+          </button>
+        `).join("");
+
+        return `
+          <section class="group-mat">
+            <div class="group-title">
+              <strong>${groupName}</strong>
+              <span>${assignedCount}/${guests.length} seated</span>
+            </div>
+            <div class="chip-grid">${chips}</div>
+          </section>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      renderStats();
+      renderTables();
+      renderSelectedTable();
+      renderGuestBoard();
+      bindInteractions();
+    }
+
+    function bindInteractions() {
+      document.querySelectorAll("[data-table-select]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.selectedTableId = Number(button.dataset.tableSelect);
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-guest-id]").forEach((node) => {
+        node.addEventListener("dragstart", (event) => {
+          event.dataTransfer.setData("text/plain", node.dataset.guestId);
+          event.dataTransfer.effectAllowed = "move";
+        });
+      });
+
+      document.querySelectorAll(".seat").forEach((seat) => {
+        seat.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          seat.classList.add("drag-over");
+        });
+
+        seat.addEventListener("dragleave", () => {
+          seat.classList.remove("drag-over");
+        });
+
+        seat.addEventListener("drop", (event) => {
+          event.preventDefault();
+          seat.classList.remove("drag-over");
+          const guestId = Number(event.dataTransfer.getData("text/plain"));
+          const tableId = Number(seat.dataset.tableId);
+          const seatIndex = Number(seat.dataset.seatIndex);
+          if (guestId) {
+            state.selectedTableId = tableId;
+            setAssignment(guestId, tableId, seatIndex);
+          }
+        });
+
+        seat.addEventListener("click", () => {
+          state.selectedTableId = Number(seat.dataset.tableId);
+          render();
+        });
+      });
+    }
+
+    dropHomeEl.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      dropHomeEl.classList.add("drag-over");
+    });
+
+    dropHomeEl.addEventListener("dragleave", () => {
+      dropHomeEl.classList.remove("drag-over");
+    });
+
+    dropHomeEl.addEventListener("drop", (event) => {
+      event.preventDefault();
+      dropHomeEl.classList.remove("drag-over");
+      const guestId = Number(event.dataTransfer.getData("text/plain"));
+      if (guestId) {
+        unassignGuest(guestId);
+      }
+    });
+
+    searchEl.addEventListener("input", () => {
+      state.search = searchEl.value;
+      renderGuestBoard();
+    });
+
+    clearSearchEl.addEventListener("click", () => {
+      state.search = "";
+      searchEl.value = "";
+      renderGuestBoard();
+    });
+
+    resetLayoutEl.addEventListener("click", () => {
+      state.assignments = {};
+      void persistAssignments();
+      render();
+    });
+
+    async function loadGuests() {
+      try {
+        state.guests = EMBEDDED_GUESTS;
+        await loadAssignments();
+        render();
+      } catch (error) {
+        console.error(error);
+        setAppNote("The embedded guest list could not be loaded.", true);
+      }
+    }
+
+    loadGuests();
+  </script>
+</body>
+</html>

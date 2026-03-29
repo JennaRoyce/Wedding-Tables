@@ -1,0 +1,34 @@
+{
+  "couple": [
+    "Jenna",
+    "Tyler"
+  ],
+  "venue": {
+    "name": "Ashley Ridge by Wedgewood Weddings",
+    "room": "Grand Ballroom",
+    "address": "8199 Southpark Ct., Littleton, CO 80120",
+    "reception_time_local": {
+      "start": "17:30",
+      "end": "23:00",
+      "timezone": "America/Denver"
+    },
+    "capacity": {
+      "seated": 250,
+      "standing": 300
+    },
+    "features": [
+      "Vaulted double-height ceilings",
+      "Large double-stacked windows with mountain views",
+      "Customizable LED accent lighting",
+      "High-end hardwood floors throughout"
+    ],
+    "space_notes": {
+      "dance_floor": "Dedicated hardwood dance floor with flexible sizing based on final table layout.",
+      "total_event_space_sq_ft_estimate": {
+        "min": 5000,
+        "max": 7000
+      },
+      "exact_room_dimensions_status": "Venue-facing materials do not publish exact ballroom or dance-floor dimensions. Final placement should be confirmed with the couple's floor plan coordinator."
+    }
+  }
+}
