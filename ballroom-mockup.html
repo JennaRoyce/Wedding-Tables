@@ -442,6 +442,11 @@
       color: var(--ink);
     }
 
+    .button-row button.accent {
+      background: #8b6c4f;
+      color: #fffaf4;
+    }
+
     .drop-home {
       border: 1px dashed rgba(76, 58, 37, 0.22);
       border-radius: 18px;
@@ -534,6 +539,30 @@
       gap: 8px;
     }
 
+    .guest-row {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .link-toggle {
+      border: 1px solid rgba(76, 58, 37, 0.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.84);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .link-toggle.selected {
+      background: rgba(111, 138, 122, 0.16);
+      border-color: rgba(84, 116, 89, 0.4);
+      color: var(--success);
+    }
+
     .guest-chip {
       border: 0;
       border-radius: 16px;
@@ -575,6 +604,12 @@
     .guest-chip.assigned {
       filter: saturate(0.84);
       opacity: 0.82;
+    }
+
+    .guest-chip.linked {
+      box-shadow:
+        0 0 0 2px rgba(255,255,255,0.22),
+        0 8px 14px rgba(83, 61, 39, 0.12);
     }
 
     .empty-state {
@@ -677,6 +712,9 @@
           <input id="search" type="search" placeholder="Search guest names" aria-label="Search guest names" />
           <div class="button-row">
             <button id="clear-search" class="secondary" type="button">Clear Search</button>
+            <button id="link-selected" class="accent" type="button">Link Selected</button>
+            <button id="unlink-selected" class="secondary" type="button">Unlink Selected</button>
+            <button id="clear-selected" class="secondary" type="button">Clear Selected</button>
             <button id="reset-layout" type="button">Reset Seating</button>
           </div>
         </div>
@@ -746,6 +784,8 @@
     const state = {
       guests: [],
       assignments: {},
+      linkGroups: {},
+      selectedGuestIds: [],
       selectedTableId: 1,
       search: "",
       persistenceMode: "loading"
@@ -759,6 +799,9 @@
     const appNoteEl = document.getElementById("app-note");
     const searchEl = document.getElementById("search");
     const clearSearchEl = document.getElementById("clear-search");
+    const linkSelectedEl = document.getElementById("link-selected");
+    const unlinkSelectedEl = document.getElementById("unlink-selected");
+    const clearSelectedEl = document.getElementById("clear-selected");
     const resetLayoutEl = document.getElementById("reset-layout");
 
     function initialsFor(name) {
@@ -789,6 +832,58 @@
       return `T${assignment.tableId} S${assignment.seatIndex + 1}`;
     }
 
+    function readSavedLayoutFromBrowser() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return null;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          if (parsed.assignments || parsed.linkGroups) {
+            return {
+              assignments: parsed.assignments && typeof parsed.assignments === "object" ? parsed.assignments : {},
+              linkGroups: parsed.linkGroups && typeof parsed.linkGroups === "object" ? parsed.linkGroups : {}
+            };
+          }
+
+          return {
+            assignments: parsed,
+            linkGroups: {}
+          };
+        }
+      } catch (error) {
+        console.warn("Unable to read saved seating layout.", error);
+      }
+      return null;
+    }
+
+    function linkedGroupIdForGuest(guestId) {
+      return Object.keys(state.linkGroups).find((groupId) => {
+        const members = state.linkGroups[groupId];
+        return Array.isArray(members) && members.includes(guestId);
+      }) || null;
+    }
+
+    function linkedGuestIdsForGuest(guestId) {
+      const groupId = linkedGroupIdForGuest(guestId);
+      if (!groupId) {
+        return [guestId];
+      }
+
+      const members = state.linkGroups[groupId].filter((memberId) =>
+        state.guests.some((guest) => guest.guest_id === memberId)
+      );
+
+      return members.length ? members : [guestId];
+    }
+
+    function linkLabelForGuest(guestId) {
+      const linkedIds = linkedGuestIdsForGuest(guestId);
+      return linkedIds.length > 1 ? `Linked ${linkedIds.length}` : "";
+    }
+
     function seatCountForTable(tableId) {
       return state.guests.filter((guest) => {
         const assignment = state.assignments[guest.guest_id];
@@ -800,28 +895,38 @@
       appNoteEl.innerHTML = isError ? `<div class="error">${message}</div>` : message;
     }
 
-    function saveLocalAssignments() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.assignments));
+    function saveLocalLayout() {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          assignments: state.assignments,
+          linkGroups: state.linkGroups
+        })
+      );
     }
 
-    function readSavedAssignmentsFromBrowser() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          return null;
-        }
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          return parsed;
-        }
-      } catch (error) {
-        console.warn("Unable to read saved seating assignments.", error);
+    function normalizeLinkGroups(linkGroups) {
+      if (!linkGroups || typeof linkGroups !== "object") {
+        return {};
       }
-      return null;
+
+      const normalized = {};
+      for (const [groupId, members] of Object.entries(linkGroups)) {
+        if (!Array.isArray(members)) {
+          continue;
+        }
+
+        const cleaned = [...new Set(members.map(Number).filter((value) => Number.isFinite(value)))];
+        if (cleaned.length > 1) {
+          normalized[groupId] = cleaned;
+        }
+      }
+
+      return normalized;
     }
 
     async function persistAssignments() {
-      saveLocalAssignments();
+      saveLocalLayout();
 
       try {
         const response = await fetch(API_LAYOUT_URL, {
@@ -829,7 +934,10 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ assignments: state.assignments })
+          body: JSON.stringify({
+            assignments: state.assignments,
+            link_groups: state.linkGroups
+          })
         });
 
         if (!response.ok) {
@@ -837,15 +945,15 @@
         }
 
         state.persistenceMode = "project-file";
-        setAppNote("Saving to <code>data/seating-layout.json</code> in this project. Your daughter can pull that file from GitHub and keep going.");
+        setAppNote("Saving seats and linked groups to <code>data/seating-layout.json</code> in this project. Your daughter can pull that file from GitHub and keep going.");
       } catch (error) {
         state.persistenceMode = "browser";
-        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist into <code>data/seating-layout.json</code>.");
+        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist seats and linked groups into <code>data/seating-layout.json</code>.");
       }
     }
 
     async function loadAssignments() {
-      const browserAssignments = readSavedAssignmentsFromBrowser();
+      const browserLayout = readSavedLayoutFromBrowser();
 
       try {
         const response = await fetch(API_LAYOUT_URL, { cache: "no-store" });
@@ -858,31 +966,147 @@
           payload && typeof payload.assignments === "object" && payload.assignments !== null
             ? payload.assignments
             : {};
+        const projectLinkGroups = normalizeLinkGroups(payload?.link_groups);
 
         const projectHasAssignments = Object.values(projectAssignments).some((value) => value !== null);
-        const browserHasAssignments = browserAssignments && Object.values(browserAssignments).some((value) => value !== null);
+        const browserAssignments = browserLayout?.assignments || {};
+        const browserLinkGroups = normalizeLinkGroups(browserLayout?.linkGroups);
+        const browserHasAssignments = Object.values(browserAssignments).some((value) => value !== null);
 
         if (!projectHasAssignments && browserHasAssignments) {
           state.assignments = browserAssignments;
-          saveLocalAssignments();
+          state.linkGroups = browserLinkGroups;
+          saveLocalLayout();
           state.persistenceMode = "project-file";
-          setAppNote("Migrated your existing browser seating into <code>data/seating-layout.json</code>. New changes will keep saving into the project.");
+          setAppNote("Migrated your existing browser seating into <code>data/seating-layout.json</code>. New changes will keep saving linked groups too.");
           await persistAssignments();
           return;
         }
 
         state.assignments = projectAssignments;
-        saveLocalAssignments();
+        state.linkGroups = projectLinkGroups;
+        saveLocalLayout();
         state.persistenceMode = "project-file";
-        setAppNote("Loaded saved seating from <code>data/seating-layout.json</code>. New changes will keep saving into the project.");
+        setAppNote("Loaded saved seating from <code>data/seating-layout.json</code>. Linked groups and seat assignments will keep saving into the project.");
       } catch (error) {
-        state.assignments = browserAssignments || {};
+        state.assignments = browserLayout?.assignments || {};
+        state.linkGroups = normalizeLinkGroups(browserLayout?.linkGroups);
         state.persistenceMode = "browser";
-        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist into <code>data/seating-layout.json</code>.");
+        setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist seats and linked groups into <code>data/seating-layout.json</code>.");
       }
     }
 
+    function createLinkGroupId() {
+      return `link-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    }
+
+    function toggleSelectedGuest(guestId) {
+      if (state.selectedGuestIds.includes(guestId)) {
+        state.selectedGuestIds = state.selectedGuestIds.filter((value) => value !== guestId);
+      } else {
+        state.selectedGuestIds = [...state.selectedGuestIds, guestId];
+      }
+      render();
+    }
+
+    function linkSelectedGuests() {
+      const seedIds = [...new Set(state.selectedGuestIds)];
+      if (seedIds.length < 2) {
+        setAppNote("Select at least two guests before linking them together.");
+        return;
+      }
+
+      const mergedIds = new Set(seedIds);
+      seedIds.forEach((guestId) => {
+        linkedGuestIdsForGuest(guestId).forEach((memberId) => mergedIds.add(memberId));
+      });
+
+      const nextGroups = {};
+      for (const [groupId, members] of Object.entries(state.linkGroups)) {
+        const kept = members.filter((memberId) => !mergedIds.has(memberId));
+        if (kept.length > 1) {
+          nextGroups[groupId] = kept;
+        }
+      }
+
+      const finalIds = [...mergedIds];
+      nextGroups[createLinkGroupId()] = finalIds;
+      state.linkGroups = nextGroups;
+      state.selectedGuestIds = finalIds;
+      setAppNote(`Linked ${finalIds.length} guests together. Drag any one of them to move the group.`);
+      void persistAssignments();
+      render();
+    }
+
+    function unlinkSelectedGuests() {
+      if (!state.selectedGuestIds.length) {
+        setAppNote("Select one or more linked guests first.");
+        return;
+      }
+
+      const selectedSet = new Set(state.selectedGuestIds);
+      const nextGroups = {};
+
+      for (const [groupId, members] of Object.entries(state.linkGroups)) {
+        const kept = members.filter((memberId) => !selectedSet.has(memberId));
+        if (kept.length > 1) {
+          nextGroups[groupId] = kept;
+        }
+      }
+
+      state.linkGroups = nextGroups;
+      state.selectedGuestIds = [];
+      setAppNote("Removed the selected guests from their linked groups.");
+      void persistAssignments();
+      render();
+    }
+
+    function moveLinkedGuests(guestIds, targetTableId, targetSeatIndex) {
+      const groupedSet = new Set(guestIds);
+      const targetOccupant = occupantForSeat(targetTableId, targetSeatIndex);
+
+      if (targetOccupant && !groupedSet.has(targetOccupant.guest_id)) {
+        setAppNote(`Table ${targetTableId} seat ${targetSeatIndex + 1} is occupied. Clear that seat before moving this linked group.`);
+        return;
+      }
+
+      const seatOrder = Array.from({ length: 8 }, (_, offset) => (targetSeatIndex + offset) % 8);
+      const availableSeats = seatOrder.filter((seatIndex) => {
+        const occupant = occupantForSeat(targetTableId, seatIndex);
+        return !occupant || groupedSet.has(occupant.guest_id);
+      });
+
+      if (availableSeats.length < guestIds.length) {
+        setAppNote(`Table ${targetTableId} needs ${guestIds.length} open seats to move that linked group together.`);
+        return;
+      }
+
+      guestIds.forEach((memberId) => {
+        state.assignments[memberId] = null;
+      });
+
+      guestIds.forEach((memberId, index) => {
+        state.assignments[memberId] = {
+          tableId: targetTableId,
+          seatIndex: availableSeats[index]
+        };
+      });
+
+      void persistAssignments();
+      render();
+    }
+
     function setAssignment(guestId, targetTableId, targetSeatIndex) {
+      const linkedGuestIds = linkedGuestIdsForGuest(guestId);
+      if (linkedGuestIds.length > 1) {
+        moveLinkedGuests(
+          [guestId, ...linkedGuestIds.filter((memberId) => memberId !== guestId)],
+          targetTableId,
+          targetSeatIndex
+        );
+        return;
+      }
+
       const current = state.assignments[guestId] || null;
       const displacedGuest = occupantForSeat(targetTableId, targetSeatIndex);
 
@@ -905,7 +1129,9 @@
     }
 
     function unassignGuest(guestId) {
-      state.assignments[guestId] = null;
+      linkedGuestIdsForGuest(guestId).forEach((memberId) => {
+        state.assignments[memberId] = null;
+      });
       void persistAssignments();
       render();
     }
@@ -958,6 +1184,7 @@
       const assignedCount = state.guests.filter((guest) => state.assignments[guest.guest_id]).length;
       const unassignedCount = state.guests.length - assignedCount;
       const filledTables = TABLES.filter((table) => seatCountForTable(table.id) > 0).length;
+      const linkedGroupCount = Object.keys(state.linkGroups).length;
 
       statsEl.innerHTML = `
         <div class="stat">${state.guests.length} guests loaded</div>
@@ -966,6 +1193,7 @@
         <div class="stat">${assignedCount} seated</div>
         <div class="stat">${unassignedCount} unseated</div>
         <div class="stat">${filledTables} active tables</div>
+        <div class="stat">${linkedGroupCount} linked groups</div>
       `;
     }
 
@@ -975,7 +1203,7 @@
       const seatRows = Array.from({ length: 8 }, (_, seatIndex) => {
         const guest = occupantForSeat(table.id, seatIndex);
         const display = guest
-          ? `<span style="color:${colorForGroup(guest.group)}; font-weight:700;">${guest.name}</span>`
+          ? `<span style="color:${colorForGroup(guest.group)}; font-weight:700;">${guest.name}${linkLabelForGuest(guest.guest_id) ? ` · ${linkLabelForGuest(guest.guest_id)}` : ""}</span>`
           : `<span style="color:var(--muted);">Empty seat</span>`;
         return `
           <div class="seat-row">
@@ -1017,19 +1245,30 @@
 
       guestBoardEl.innerHTML = Array.from(grouped.entries()).map(([groupName, guests]) => {
         const assignedCount = guests.filter((guest) => state.assignments[guest.guest_id]).length;
-        const chips = guests.map((guest) => `
-          <button
-            class="guest-chip ${state.assignments[guest.guest_id] ? "assigned" : ""}"
-            type="button"
-            draggable="true"
-            data-guest-id="${guest.guest_id}"
-            style="background:${colorForGroup(groupName)};"
-            title="${guest.name} (${groupName})"
-          >
-            <span class="name">${guest.name}</span>
-            <span class="status">${assignmentLabel(guest)}</span>
-          </button>
-        `).join("");
+        const chips = guests.map((guest) => {
+          const linkLabel = linkLabelForGuest(guest.guest_id);
+          return `
+            <div class="guest-row">
+              <button
+                class="link-toggle ${state.selectedGuestIds.includes(guest.guest_id) ? "selected" : ""}"
+                type="button"
+                data-select-guest="${guest.guest_id}"
+                title="${state.selectedGuestIds.includes(guest.guest_id) ? "Deselect" : "Select"} ${guest.name} for linking"
+              >${state.selectedGuestIds.includes(guest.guest_id) ? "✓" : "+"}</button>
+              <button
+                class="guest-chip ${state.assignments[guest.guest_id] ? "assigned" : ""} ${linkLabel ? "linked" : ""}"
+                type="button"
+                draggable="true"
+                data-guest-id="${guest.guest_id}"
+                style="background:${colorForGroup(groupName)};"
+                title="${guest.name} (${groupName})"
+              >
+                <span class="name">${guest.name}</span>
+                <span class="status">${linkLabel ? `${assignmentLabel(guest)} · ${linkLabel}` : assignmentLabel(guest)}</span>
+              </button>
+            </div>
+          `;
+        }).join("");
 
         return `
           <section class="group-mat">
@@ -1056,6 +1295,12 @@
         button.addEventListener("click", () => {
           state.selectedTableId = Number(button.dataset.tableSelect);
           render();
+        });
+      });
+
+      document.querySelectorAll("[data-select-guest]").forEach((button) => {
+        button.addEventListener("click", () => {
+          toggleSelectedGuest(Number(button.dataset.selectGuest));
         });
       });
 
@@ -1115,17 +1360,32 @@
 
     searchEl.addEventListener("input", () => {
       state.search = searchEl.value;
-      renderGuestBoard();
+      render();
     });
 
     clearSearchEl.addEventListener("click", () => {
       state.search = "";
       searchEl.value = "";
-      renderGuestBoard();
+      render();
+    });
+
+    linkSelectedEl.addEventListener("click", () => {
+      linkSelectedGuests();
+    });
+
+    unlinkSelectedEl.addEventListener("click", () => {
+      unlinkSelectedGuests();
+    });
+
+    clearSelectedEl.addEventListener("click", () => {
+      state.selectedGuestIds = [];
+      render();
     });
 
     resetLayoutEl.addEventListener("click", () => {
       state.assignments = {};
+      state.linkGroups = {};
+      state.selectedGuestIds = [];
       void persistAssignments();
       render();
     });

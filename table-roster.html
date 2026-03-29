@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding Table Roster</title>
+  <style>
+    :root {
+      --bg: #f5ede2;
+      --panel: #fffaf3;
+      --ink: #3f3126;
+      --muted: #7a695a;
+      --line: rgba(78, 57, 37, 0.1);
+      --shadow: 0 18px 40px rgba(72, 53, 35, 0.1);
+      --cregg: #b75d4e;
+      --royce: #56779a;
+      --lyster: #918146;
+      --horst: #7c6b9f;
+      --family-friends: #6f9272;
+      --friends: #d07c45;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.85), transparent 28%),
+        linear-gradient(180deg, #f7f0e8 0%, #eee1d1 100%);
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 28px 18px 40px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero,
+    .panel {
+      width: min(1400px, 100%);
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 24px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 3vw, 3.6rem);
+      line-height: 0.95;
+      font-weight: 600;
+    }
+
+    .hero p,
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .stat {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .panel {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      color: #fff;
+      background: #8b6c4f;
+      font: inherit;
+    }
+
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .table-card,
+    .unseated-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.66);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .table-card.empty {
+      opacity: 0.72;
+    }
+
+    .table-card header,
+    .unseated-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .table-card .count,
+    .unseated-card .count {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .seat-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .seat-row {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(92, 69, 45, 0.05);
+    }
+
+    .seat-label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .guest-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .guest-name {
+      min-width: 0;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .empty-text {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .message {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.65);
+      color: var(--muted);
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .hero,
+      .panel {
+        box-shadow: none;
+        border-color: #ccc;
+      }
+
+      .toolbar button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Read-Only Seating View</div>
+      <h1>Wedding Table Roster</h1>
+      <p>
+        This page reads the saved seating data and lists every guest by table and seat. Use it as a check view,
+        print view, or handoff sheet after placements are saved.
+      </p>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2>Table Assignments</h2>
+          <p id="source-note">Loading seating data from the project files.</p>
+        </div>
+        <button type="button" id="print-view">Print View</button>
+      </div>
+
+      <div id="content"></div>
+    </section>
+  </main>
+
+  <script>
+    const TABLE_COUNT = 29;
+    const GROUP_COLORS = {
+      "Cregg": "var(--cregg)",
+      "Royce": "var(--royce)",
+      "Lyster": "var(--lyster)",
+      "Horst": "var(--horst)",
+      "Family Friends": "var(--family-friends)",
+      "Friends": "var(--friends)"
+    };
+
+    const statsEl = document.getElementById("stats");
+    const contentEl = document.getElementById("content");
+    const sourceNoteEl = document.getElementById("source-note");
+    const printViewEl = document.getElementById("print-view");
+
+    function colorForGroup(group) {
+      return GROUP_COLORS[group] || "#8b6c4f";
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`);
+      }
+      return response.json();
+    }
+
+    async function loadLayout() {
+      try {
+        const layout = await fetchJson("/api/layout");
+        sourceNoteEl.textContent = "Live view from /api/layout backed by data/seating-layout.json.";
+        return layout;
+      } catch (error) {
+        const layout = await fetchJson("data/seating-layout.json");
+        sourceNoteEl.textContent = "Fallback view from data/seating-layout.json.";
+        return layout;
+      }
+    }
+
+    function buildTables(guests, assignments) {
+      const guestById = new Map(guests.map((guest) => [String(guest.guest_id), guest]));
+      const tables = Array.from({ length: TABLE_COUNT }, (_, index) => ({
+        tableId: index + 1,
+        seats: []
+      }));
+      const unseated = [];
+
+      guests.forEach((guest) => {
+        const assignment = assignments[String(guest.guest_id)] ?? assignments[guest.guest_id];
+        if (!assignment || typeof assignment !== "object") {
+          unseated.push(guest);
+          return;
+        }
+
+        const table = tables.find((entry) => entry.tableId === assignment.tableId);
+        if (!table) {
+          unseated.push(guest);
+          return;
+        }
+
+        table.seats.push({
+          seatIndex: assignment.seatIndex,
+          guest
+        });
+      });
+
+      tables.forEach((table) => {
+        table.seats.sort((left, right) => left.seatIndex - right.seatIndex);
+      });
+
+      return { tables, unseated, guestById };
+    }
+
+    function renderStats(guests, tables, unseated, updatedAt) {
+      const occupiedTables = tables.filter((table) => table.seats.length > 0).length;
+      const seatedGuests = guests.length - unseated.length;
+      const updatedLabel = updatedAt ? new Date(updatedAt).toLocaleString() : "Not saved yet";
+
+      statsEl.innerHTML = `
+        <div class="stat">${guests.length} guests loaded</div>
+        <div class="stat">${seatedGuests} seated</div>
+        <div class="stat">${unseated.length} unseated</div>
+        <div class="stat">${occupiedTables} tables in use</div>
+        <div class="stat">Updated: ${updatedLabel}</div>
+      `;
+    }
+
+    function renderTableCards(tables) {
+      return tables.map((table) => {
+        const rows = table.seats.length
+          ? table.seats.map(({ seatIndex, guest }) => `
+              <div class="seat-row">
+                <div class="seat-label">Seat ${seatIndex + 1}</div>
+                <div class="guest-line">
+                  <div class="guest-name">${guest.name}</div>
+                  <span class="badge" style="background:${colorForGroup(guest.group)};">${guest.group}</span>
+                </div>
+              </div>
+            `).join("")
+          : `<div class="empty-text">No guests seated at this table yet.</div>`;
+
+        return `
+          <section class="table-card ${table.seats.length ? "" : "empty"}">
+            <header>
+              <h3>Table ${table.tableId}</h3>
+              <div class="count">${table.seats.length}/8 seated</div>
+            </header>
+            <div class="seat-list">${rows}</div>
+          </section>
+        `;
+      }).join("");
+    }
+
+    function renderUnseatedCard(unseated) {
+      const rows = unseated.length
+        ? unseated.map((guest) => `
+            <div class="seat-row">
+              <div class="seat-label">Open</div>
+              <div class="guest-line">
+                <div class="guest-name">${guest.name}</div>
+                <span class="badge" style="background:${colorForGroup(guest.group)};">${guest.group}</span>
+              </div>
+            </div>
+          `).join("")
+        : `<div class="empty-text">Everyone is seated.</div>`;
+
+      return `
+        <section class="unseated-card">
+          <header>
+            <h3>Unseated Guests</h3>
+            <div class="count">${unseated.length}</div>
+          </header>
+          <div class="seat-list">${rows}</div>
+        </section>
+      `;
+    }
+
+    async function loadRoster() {
+      try {
+        const [guests, layout] = await Promise.all([
+          fetchJson("data/guest-list.json"),
+          loadLayout()
+        ]);
+
+        const assignments = layout?.assignments && typeof layout.assignments === "object" ? layout.assignments : {};
+        const { tables, unseated } = buildTables(guests, assignments);
+
+        renderStats(guests, tables, unseated, layout?.updated_at);
+        contentEl.innerHTML = `
+          <div class="tables-grid">${renderTableCards(tables)}</div>
+          ${renderUnseatedCard(unseated)}
+        `;
+      } catch (error) {
+        console.error(error);
+        contentEl.innerHTML = `
+          <div class="message">
+            Unable to load the saved seating data. Start the local app server with <code>python3 server.py</code> and
+            open this page through <code>http://127.0.0.1:8000/table-roster.html</code>.
+          </div>
+        `;
+      }
+    }
+
+    printViewEl.addEventListener("click", () => {
+      window.print();
+    });
+
+    loadRoster();
+  </script>
+</body>
+</html>

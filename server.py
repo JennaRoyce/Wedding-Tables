@@ -17,29 +17,35 @@ LAYOUT_PATH = ROOT / "data" / "seating-layout.json"
 
 def read_layout() -> dict:
     if not LAYOUT_PATH.exists():
-        return {"assignments": {}, "updated_at": None}
+        return {"assignments": {}, "link_groups": {}, "updated_at": None}
 
     try:
         payload = json.loads(LAYOUT_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return {"assignments": {}, "updated_at": None}
+        return {"assignments": {}, "link_groups": {}, "updated_at": None}
 
     if not isinstance(payload, dict):
-        return {"assignments": {}, "updated_at": None}
+        return {"assignments": {}, "link_groups": {}, "updated_at": None}
 
     assignments = payload.get("assignments", {})
     if not isinstance(assignments, dict):
         assignments = {}
 
+    link_groups = payload.get("link_groups", {})
+    if not isinstance(link_groups, dict):
+        link_groups = {}
+
     return {
         "assignments": assignments,
+        "link_groups": link_groups,
         "updated_at": payload.get("updated_at"),
     }
 
 
-def write_layout(assignments: dict) -> dict:
+def write_layout(assignments: dict, link_groups: dict) -> dict:
     payload = {
         "assignments": assignments,
+        "link_groups": link_groups,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     LAYOUT_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -84,7 +90,12 @@ class SeatingHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.BAD_REQUEST, "assignments must be an object")
             return
 
-        saved = write_layout(assignments)
+        link_groups = payload.get("link_groups", {})
+        if not isinstance(link_groups, dict):
+            self.send_error(HTTPStatus.BAD_REQUEST, "link_groups must be an object")
+            return
+
+        saved = write_layout(assignments, link_groups)
         self._send_json(saved, status=HTTPStatus.OK)
 
 
