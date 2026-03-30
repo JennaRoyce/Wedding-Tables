@@ -759,13 +759,7 @@
       { id: 20, x: 290, y: 680 },
       { id: 21, x: 460, y: 670 },
       { id: 22, x: 1140, y: 670 },
-      { id: 23, x: 1310, y: 680 },
-      { id: 24, x: 1480, y: 690 },
-      { id: 25, x: 210, y: 855 },
-      { id: 26, x: 410, y: 845 },
-      { id: 27, x: 610, y: 835 },
-      { id: 28, x: 990, y: 835 },
-      { id: 29, x: 1190, y: 845 }
+      { id: 23, x: 1310, y: 680 }
     ];
 
     const GROUP_COLORS = {
@@ -925,6 +919,25 @@
       return normalized;
     }
 
+    function sanitizeAssignments(assignments) {
+      const validTableIds = new Set(TABLES.map((table) => table.id));
+      const sanitized = {};
+
+      Object.entries(assignments || {}).forEach(([guestId, assignment]) => {
+        if (
+          assignment &&
+          typeof assignment === "object" &&
+          validTableIds.has(assignment.tableId)
+        ) {
+          sanitized[guestId] = assignment;
+        } else {
+          sanitized[guestId] = null;
+        }
+      });
+
+      return sanitized;
+    }
+
     async function persistAssignments() {
       saveLocalLayout();
 
@@ -974,7 +987,7 @@
         const browserHasAssignments = Object.values(browserAssignments).some((value) => value !== null);
 
         if (!projectHasAssignments && browserHasAssignments) {
-          state.assignments = browserAssignments;
+          state.assignments = sanitizeAssignments(browserAssignments);
           state.linkGroups = browserLinkGroups;
           saveLocalLayout();
           state.persistenceMode = "project-file";
@@ -983,13 +996,13 @@
           return;
         }
 
-        state.assignments = projectAssignments;
+        state.assignments = sanitizeAssignments(projectAssignments);
         state.linkGroups = projectLinkGroups;
         saveLocalLayout();
         state.persistenceMode = "project-file";
         setAppNote("Loaded saved seating from <code>data/seating-layout.json</code>. Linked groups and seat assignments will keep saving into the project.");
       } catch (error) {
-        state.assignments = browserLayout?.assignments || {};
+        state.assignments = sanitizeAssignments(browserLayout?.assignments || {});
         state.linkGroups = normalizeLinkGroups(browserLayout?.linkGroups);
         state.persistenceMode = "browser";
         setAppNote("Using browser-only save right now. Run <code>python3 server.py</code> instead of <code>python3 -m http.server</code> to persist seats and linked groups into <code>data/seating-layout.json</code>.");
@@ -1392,12 +1405,23 @@
 
     async function loadGuests() {
       try {
-        state.guests = EMBEDDED_GUESTS;
+        const response = await fetch("/data/guest-list.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        state.guests = await response.json();
         await loadAssignments();
         render();
       } catch (error) {
-        console.error(error);
-        setAppNote("The embedded guest list could not be loaded.", true);
+        console.warn("Falling back to embedded guest list.", error);
+        try {
+          state.guests = EMBEDDED_GUESTS;
+          await loadAssignments();
+          render();
+        } catch (embeddedError) {
+          console.error(embeddedError);
+          setAppNote("The guest list could not be loaded.", true);
+        }
       }
     }
 
